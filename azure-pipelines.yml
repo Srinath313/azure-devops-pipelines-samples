@@ -8,10 +8,13 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-- task: DotNetCoreCLI@2
+- task: AzureWebApp@1
   inputs:
     azureSubscription: 'Free Trial(9facf577-1995-4354-b480-1c1148e24d64)'
-    command: 'build'
+    appType: 'webApp'
+    appName: 
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    deploymentMethod: 'auto'
 
 steps:
 task: NuGetToolInstaller@1
