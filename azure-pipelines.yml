@@ -1,31 +1,24 @@
 trigger:
-master
+- master
 
 pool:
-  name: Azure Pipelines
+  name: Azure Pipelines  # Change 'Default' to the name of your self-hosted agent pool
 
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: 'Free Trial(9facf577-1995-4354-b480-1c1148e24d64)'
-    appType: 'webApp'
-    appName: 
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-    deploymentMethod: 'auto'
 
 steps:
-task: NuGetToolInstaller@1
+- task: NuGetToolInstaller@1
 
-task: NuGetCommand@2
+- task: NuGetCommand@2
   inputs:
+    command: 'restore'
     restoreSolution: '$(solution)'
 
-task: DotNetCoreCLI@2
-  name: 'BuildApp'
+- task: DotNetCoreCLI@2
   inputs:
-    command: build
-    projects: '**/*.csproj'
+    command: 'build'
+    projects: '$(solution)'
     arguments: '--configuration $(buildConfiguration)'
