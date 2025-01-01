@@ -1,55 +1,28 @@
 trigger:
-- main
+master
 
 pool:
-  vmImage: Azure Pipelines
+  name: Azure Pipelines
 
 variables:
-  repository: "myimage"
-  dockerfilePath: "$(Build.SourcesDirectory)/Dockerfile"
-  tag: $(Build.BuildId)
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+- task: DotNetCoreCLI@2
+  inputs:
+    azureSubscription: 'Free Trial(9facf577-1995-4354-b480-1c1148e24d64)'
+    command: 'build'
 
 steps:
-  - task: Cache@2
-    displayName: Cache task
-    inputs:
-      key: 'docker | "$(Agent.OS)" | cache3'
-      path: $(Pipeline.Workspace)/docker
-      cacheHitVar: CACHE_RESTORED #Variable to set to 'true' when the cache is restored
+task: NuGetToolInstaller@1
 
-  - script: |
-      ls $(Pipeline.Workspace)/docker/
-      docker load -i $(Pipeline.Workspace)/docker/cache.tar
-      # docker load -i $(Pipeline.Workspace)/docker/cache-dotnet-sdk.tar
-    displayName: Docker restore
-    condition: and(not(canceled()), eq(variables.CACHE_RESTORED, 'true'))
+task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
 
-  # - script: |
-  #     date
-  #     docker pull mcr.microsoft.com/dotnet/aspnet:8.0
-  #     docker pull mcr.microsoft.com/dotnet/sdk:8.0
-  #     date
-  #   displayName: Docker pull
-
-  - task: Docker@2
-    displayName: "Build Docker"
-    inputs:
-      command: "build"
-      repository: $(repository)
-      dockerfile: $(dockerfilePath)
-      tags: |
-        $(tag)
-
-  - script: |
-      mkdir -p $(Pipeline.Workspace)/docker
-      docker save -o $(Pipeline.Workspace)/docker/cache.tar $(repository):$(tag)
-      # docker pull mcr.microsoft.com/dotnet/sdk:8.0 || true
-      # docker save -o $(Pipeline.Workspace)/docker/cache-dotnet-sdk.tar "mcr.microsoft.com/dotnet/sdk:8.0"
-    displayName: Docker save
-    condition: and(not(canceled()), not(failed()), ne(variables.CACHE_RESTORED, 'true'))
-
-  # - script: |
-  #     mkdir -p $(Pipeline.Workspace)/docker
-  #     docker save -o $(Pipeline.Workspace)/docker/cache.tar $(repository):$(tag)
-  #   displayName: Docker save
-  #   condition: and(not(canceled()), not(failed()), ne(variables.CACHE_RESTORED, 'true'))
+task: DotNetCoreCLI@2
+  name: 'BuildApp'
+  inputs:
+    command: build
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
